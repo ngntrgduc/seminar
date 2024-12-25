@@ -1,0 +1,17 @@
+# Obsidian settings
+*/.obsidian/workspace.json
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+resources
+
+.obsidian
+
+notes
