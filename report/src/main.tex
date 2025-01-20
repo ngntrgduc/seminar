@@ -1,0 +1,102 @@
+% \documentclass{article}
+% \documentclass[12pt, vietnamese]{report}
+\documentclass[12pt, vietnamese]{article}
+\usepackage{ngntrgduc}
+\usepackage[utf8]{vietnam}
+\usepackage[
+    a4paper,
+    margin=1in,
+    footskip=0.75in,
+    % top=0.75in,
+    % bottom=0.25in,
+]{geometry}
+
+\usepackage{bbm} % Indicator function
+\usepackage{pgfgantt} % Gantt chart
+% \usepackage{titlesec} % Title customization
+\usepackage{caption} % Caption alignment
+\captionsetup{justification=raggedright,singlelinecheck=false}
+
+\usepackage{multirow}
+
+\usepackage[
+    backend=biber,
+    % style=alphabetic,
+    sorting=none  % Entries are processed in citation order 
+    % sorting=ydnt  % sort by year (descending), name, title 
+]{biblatex}
+\addbibresource{refs.bib}
+
+\hypersetup{
+    colorlinks,
+    citecolor=magenta,
+    linkcolor=black,
+    urlcolor=cyan,
+    pdftitle={Xử lý dữ liệu khuyết},
+    pdfauthor={Trung-Duc Nguyen}
+}
+
+\graphicspath{img/}
+
+% \setcounter{chapter}{-1} %Getting chapter numbering to start at 0
+
+ % Header and Footer
+% \pagestyle{fancy}
+% \fancyhf{}
+% \lhead{\leftmark}
+% \rhead{\thepage}
+
+\setlength\parindent{0pt}   % new paragraphs will not be indented
+% \setlength{\parskip}{0.2cm} % more space between paragraphs
+\setlength{\parskip}{0.25cm} % more space between paragraphs
+
+\onehalfspacing % More space each line
+% \doublespacing
+
+\input{define-theorems}  % Define theorems style
+\input{shorcuts}  % Symbol shortcuts
+
+
+\begin{document}
+
+\input{cover}
+\newpage \ \thispagestyle{empty} \newpage
+
+% Lời cảm ơn
+% % \input{acknowledgement}
+
+% Mục lục
+\tableofcontents \newpage
+
+% Danh mục các thuật ngữ và từ viết tắt
+\input{abbreviations}
+% \listoftables 
+% \listoffigures
+
+% Tóm tắt
+\input{preface}
+
+% Kiến thức chuẩn bị
+\input{content/prerequisites}
+
+% Nội dung
+\input{content/introduction}
+\input{content/bayes}
+\input{content/neumiss}
+\input{content/empirical-result}
+
+
+% Tài liệu tham khảo
+\newpage
+\printbibliography[
+    heading=bibintoc, % Add the bibliography to the ToC
+    title={Tài liệu tham khảo}
+]
+
+% % \printindex
+
+% Phụ lục
+% \input{appendix}
+
+\end{document}
+

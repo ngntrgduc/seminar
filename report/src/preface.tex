@@ -1,0 +1,11 @@
+\section*{Tóm tắt}
+% \addcontentsline{toc}{section}{\protect\numberline{}Tóm tắt}
+\addcontentsline{toc}{section}{Tóm tắt}
+
+Bài báo \cite{le2020neumiss} xử lý vấn đề dữ liệu khuyết trong các bài toán học có giám sát, cụ thể là các bài toán hồi quy tuyến tính.
+Dựa trên việc xấp xỉ dự đoán Bayes (mô hình dự đoán tốt nhất theo lý thuyết) trên tập dữ liệu khuyết,
+bài báo đề xuất sử dụng chuỗi Neumann kết hợp với phương pháp Algorithm Unrolling \cite{gregor2010unroll} để xây dựng một kiến trúc neural network có tên là NeuMiss. Mạng NeuMiss sử dụng các hàm kích hoạt phi tuyến là các mask (chỉ số) của dữ liệu khuyết, giúp mạng hoạt động hiệu quả với các tập dữ liệu có độ lớn trung bình trở lên với các cơ chế dữ liệu khuyết khác nhau 
+bao gồm cơ chế dữ liệu khuyết hoàn toàn ngẫu nhiên (MCAR), cơ chế dữ liệu khuyết ngẫu nhiên (MAR), và cơ chế dữ liệu khuyết không ngẫu nhiên (MNAR).
+Đặc biệt, mạng NeuMiss hoạt động hiệu quả trong những trường hợp mà các phương pháp truyền thống thường gặp khó khăn.
+
+Mục đích của bài báo cáo này là đi trình bày lại các kiến thức nền tảng và kiến trúc của mạng NeuMiss, cũng như một số kết quả thực nghiệm cho các cài đặt khác nhau.

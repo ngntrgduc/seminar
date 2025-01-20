@@ -1,0 +1,69 @@
+\section{Giới thiệu về xử lý dữ liệu khuyết}
+Dữ liệu bị khuyết là một vấn đề phổ biến trong lĩnh vực Khoa học dữ liệu, đặc biệt với các bài toán học có giám sát (supervised learning). Mục tiêu chính của các bài toán này là dự đoán các giá trị hoặc phân loại các dữ liệu mới dựa trên các đặc trưng từ dữ liệu cũ. Phần lớn các phương pháp nhằm giải quyết các bài toán này đều được thiết kế để hoạt động trên tập dữ liệu hoàn chỉnh. Do đó, khi dữ liệu đầu vào bị khuyết, mô hình không thể học đầy đủ các quy luật cần thiết để có thể hoạt động tốt, làm giảm chất lượng của mô hình. Vậy nên ta cần tiền xử lý các giá trị bị khuyết, hoặc sử dụng các mô hình có thể tự xử lý dữ liệu khuyết 
+trên các tập dữ liệu không hoàn chỉnh.
+
+% xử lý dữ liệu khuyết khá giống với bài toán học bán giám sát khi mà dữ liệu được học không đầy đủ, nhưng các bài toán dữ liệu khuyết khác semi-supervised learning ở chỗ label của dữ liệu có thể bị khuyết, trong khi trong semi-supervised learning thì không
+
+
+\subsection{Các cơ chế dữ liệu khuyết} \label{section:missingmechanism}
+Dữ liệu bị khuyết có thể đến từ nhiều nguyên nhân khác nhau, ví dụ như: do người trả lời không cung cấp thông tin, do quá trình khảo sát không thu thập đủ dữ liệu, do lỗi ở phía thiết bị hoặc phần mềm thu thập dữ liệu, do quá trình xử lý dữ liệu,... Do đó, các dữ liệu khuyết cũng nên được chia ra theo từng loại dựa trên nguyên nhân gây ra dữ liệu bị khuyết để có cách xử lý phù hợp. Việc sử dụng những phương pháp xử lý không phù hợp với từng loại dữ liệu khuyết có thể dẫn tới kết luận sai lệch từ dữ liệu.
+
+Theo Donald B. Rubin, dữ liệu khuyết được chia thành 3 loại chính: MCAR, MAR, và MNAR \cite{rubin1976inference}.
+
+\begin{itemize}
+    \item \textbf{Dữ liệu khuyết hoàn toàn ngẫu nhiên (Missing Completely At Random -- MCAR)} là dữ liệu bị khuyết hoàn toàn không phụ thuộc vào dữ liệu quan sát được hoặc không quan sát được. Hay nói cách khác, việc dữ liệu bị khuyết là ``hoàn toàn ngẫu nhiên''.
+
+% Ví dụ: Một máy cảm biến thu nhập dữ liệu bỗng dưng bị hỏng không rõ nguyên nhân, làm cảm biến không thể hoạt động và thu thập dữ liệu, thì dữ liệu ở trong khoảng thời gian đó bị khuyết theo cơ chế MCAR. -> chưa chắc
+    
+    Ví dụ: Trong một khảo sát nghiên cứu, một số phiếu trả lời bị thất lạc ngẫu nhiên do quá trình vận chuyển của bưu điện. Việc thất lạc phiếu khảo sát là hoàn toàn ngẫu nhiên và không liên quan đến nội dung câu trả lời, người tham gia, hoặc bất kỳ yếu tố nào khác trong khảo sát.
+
+% Đây là dạng dữ liệu khuyết dễ xử lý nhất, bởi vì nó không tạo ra bất cứ bias nào cho việc phân tích và suy diễn dữ liệu. 
+
+    \item \textbf{Dữ liệu khuyết ngẫu nhiên (Missing At Random -- MAR)} là dữ liệu bị khuyết chỉ phụ thuộc vào dữ liệu quan sát được mà không phụ thuộc vào dữ liệu không quan sát được (hay chính nó).
+
+    Ví dụ: Trong một khảo sát có các câu hỏi về chủ đề nhạy cảm, phụ nữ thường ngại và không trả lời các câu hỏi nhạy cảm, có thể là do họ không thoải mái với câu hỏi đó. Tuy nhiên, đàn ông thì không có xu hướng như vậy và sẵn lòng trả lời. Như vậy, dữ liệu bị khuyết theo cơ chế MAR vì việc thiếu dữ liệu về câu trả lời của các câu hỏi nhạy cảm phụ thuộc vào giới tính của người được khảo sát, chứ không phải do giá trị của chính các câu hỏi nhạy cảm.
+
+
+    \item \textbf{Dữ liệu khuyết không ngẫu nhiên (Missing Not At Random -- MNAR)} là dữ liệu bị khuyết không thuộc một trong hai cơ chế dữ liệu khuyết bên trên, tức dữ liệu bị khuyết phụ thuộc vào dữ liệu quan sát được và không quan sát được, hoặc chỉ phụ thuộc vào dữ liệu dữ liệu không quan sát được, hay chính nó.
+
+    MNAR thường xảy ra do người cung cấp thông tin từ chối tiết lộ thông tin cá nhân hay thông tin nhạy cảm.
+
+% Ví dụ: Trong lúc đại dịch COVID-19, địa phương sẽ khảo sát những nhà nào đang có người mắc COVID. Thì một số trường hợp sẽ không điền câu trả lời vào khảo sát (do sợ bị cách ly, xa gia đình,...) có thể sẽ cung cấp nhiều thông tin hữu ích. Lúc này, dữ liệu sẽ bị khuyết theo cơ chế MNAR.
+
+    Ví dụ: Trong một cuộc khảo sát về sức khỏe tâm lý, người tham gia được yêu cầu trả lời câu hỏi về mức độ trầm cảm của họ. Tuy nhiên, những người có mức độ trầm cảm cao thường có xu hướng không trả lời hoặc từ chối cung cấp thông tin về tình trạng của mình do cảm giác lo ngại, xấu hổ, hoặc sợ bị đánh giá. Tức dữ liệu bị khuyết phụ thuộc trực tiếp vào chính giá trị của mức độ trầm cảm.
+
+% Ví dụ: Trong một cuộc khảo sát về mức thu nhập của các hộ gia đình, các hộ gia đình có thu nhập cao thường từ chối trả lời câu hỏi về thu nhập. Điều này có nghĩa là dữ liệu bị thiếu về thu nhập không phải là ngẫu nhiên mà có liên quan trực tiếp đến giá trị thực tế của biến bị thiếu (tức là, những người có thu nhập cao có xu hướng không tiết lộ thu nhập của mình).
+\end{itemize}
+
+Với MNAR, ta cần phải mô hình cơ chế dữ liệu khuyết vì sự khuyết dữ liệu có thể cung cấp nhiều thông tin hữu ích.
+MNAR thường phức tạp hơn MCAR hay MAR bởi dữ liệu bị khuyết phụ thuộc vào chính nó, không phải do ngẫu nhiên. Chính vì vậy, cơ chế MNAR thường xuất hiện ở trong thực tế, nhưng do nó khó xử lý nên phần lớn các phương pháp xử lý dữ liệu khuyết đều giả định dữ liệu bị khuyết với cơ chế MCAR và MAR, và các phương pháp này thường không thể áp dụng cho MNAR.
+
+
+\subsection{Phương pháp xử lý dữ liệu khuyết}
+Xử lý dữ liệu khuyết là một vấn đề đã được nghiên cứu trong khoảng thời gian dài. Các nhà nghiên cứu đã đề xuất nhiều phương pháp khác nhau, và thường sẽ có 3 hướng xử lý dữ liệu khuyết chính:
+\begin{itemize}
+    \item Loại bỏ toàn bộ các dữ liệu bị khuyết (Listwise deletion).
+    \item Điền khuyết (Impute) dữ liệu bằng các phương pháp điền khuyết.
+    \item Sử dụng các phương pháp có thể tự xử lý dữ liệu khuyết hay không bị ảnh hưởng bởi dữ liệu khuyết.
+\end{itemize}
+
+
+Thông thường, cách đơn giản để xử lý dữ liệu khuyết là xoá tất cả các dòng có chứa những dữ liệu khuyết để tập dữ liệu khuyết trở thành tập dữ liệu đầy đủ. 
+Nhưng việc xoá tất cả dữ liệu khuyết sẽ khiến tập dữ liệu nhỏ đi, từ đó dữ liệu sẽ không còn nhiều thông tin hữu ích, chưa kể có một số loại dữ liệu khuyết phụ thuộc vào dữ liệu đã quan sát được, hay dữ liệu bị khuyết không hoàn toàn ngẫu nhiên, sẽ cung cấp nhiều thông tin hữu ích như mục \ref{section:missingmechanism} có đề cập.
+
+Từ đó, việc xoá tất cả dữ liệu khuyết không phải là phương pháp tốt trong nhiều trường hợp vì nó có thể bỏ qua những dữ liệu có ích. Thay vào đó, ta sẽ muốn chèn dữ liệu vào những chỗ mà dữ liệu bị khuyết, hay còn được gọi là phương pháp điền khuyết (Imputation).
+
+Điền khuyết
+là phương pháp điền dữ liệu khuyết bằng các giá trị cố định. Có nhiều cách để điền khuyết dữ liệu như: Simple Impute (Điền khuyết đơn giản), Interactive Impute (Điền khuyết tuần tự), Multiple Impute (Đa điền khuyết), MICE (Multiple Imputation by Chained Equations), PCA (Principal Component Analysis), hay sử dụng các thuật toán Machine learning như: Random Forest, KNN, Decision Tree, SVM,... không cần giả định về phân phối của dữ liệu do chúng đều là các phương pháp phi tham số.
+
+Tuy nhiên, điền khuyết trong một số trường hợp cũng không phải lựa chọn tốt, khi mà nó có thể thay đổi phân phối của dữ liệu, làm mất tính liên kết giữa các đặc trưng với nhau.
+
+Cùng với sự phát triển của các neural network, một số công trình nghiên cứu đã tận dụng sức mạnh của các kiến trúc mạng khác nhau để xử lý các vấn đề với dữ liệu khuyết,...
+ví dụ như: 
+MLP (Multilayer perceptron), 
+GAIN hay MisGAN (sử dụng kiến trúc GAN để điền khuyết dữ liệu), 
+MIWAE (dựa trên Variational Autoencoder),... 
+
+Nhưng những phương pháp này cần có nhiều dữ liệu đầu vào hơn so với các phương pháp điền khuyết trên, cũng như các cơ chế dữ liệu khác nhau thường đòi hỏi các cách xử lý khác nhau.
+
+Trong thực tế, các nhà phân tích dữ liệu thường phải giả sử 1 trong 3 loại cơ chế dữ liệu khuyết vì họ không biết rằng dữ liệu bị khuyết thực tế sẽ thuộc vào kiểu cơ chế nào. Bài báo \cite{le2020neumiss} đề xuất một neural network có thể xử lý đồng thời cả 3 loại cơ chế trong bài toán hồi quy tuyến tính, mà không cần các bước điền khuyết truyền thống.

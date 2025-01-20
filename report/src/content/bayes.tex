@@ -1,0 +1,468 @@
+% \section{Mô hình với dữ liệu khuyết}
+\section{Tổng quan các mô hình nghiên cứu với dữ liệu khuyết}
+Để mô hình hoá vấn đề dữ liệu khuyết trong các bài toán hồi quy tuyến tính, ta định nghĩa một số ký hiệu:
+
+Ta xét tập dữ liệu $D_n = \{(X_1, Y_1),\dots, (X_n, Y_n)\}$ gồm các cặp $(X_i, Y_i)$ độc lập với nhau, được phân phối theo cặp tổng quát $(X, Y)$, trong đó $X \in \R^d$ đại diện cho vector đặc trưng với $d$ chiều, gồm các biến độc lập, và biến phụ thuộc $Y \in \R$.
+
+Ta định nghĩa vector chỉ mục (indicator vector) $M \in \{0, 1\}^d$, sao cho với mọi $1 \leq j \leq d$:
+\[
+    M_j = 
+    \begin{cases}
+        1, \ \text{nếu } X_j \text{ bị khuyết}, \\
+        0, \ \text{nếu } X_j \text{ không bị khuyết}. \\
+    \end{cases}
+\]
+
+Lúc này, vector ngẫu nhiên $M$ đóng vai trò như một mask cho các giá trị dữ liệu bị khuyết trên $X$.
+
+Ta kí hiệu $\mathcal{X} \in \R^d$ là không gian đầu vào,
+$\widetilde{\mathcal{X}}$ là không gian tương tự như $\mathcal{X} = (\R \cup \{\NA\})^d$ nhưng có chứa thêm phần tử $\NA$ tượng trưng cho dữ liệu bị khuyết.
+
+Ta kí hiệu vector đặc trưng bị khuyết $\widetilde{X} \in \widetilde{\mathcal{X}}$, sao cho với mọi $1 \leq j \leq d$:
+\[
+    \widetilde{X}_j = 
+    \begin{cases}
+    \NA, \text{ nếu } M_j = 1, \\
+    X_j, \text{ nếu } M_j = 0. \\
+    \end{cases}
+\]
+
+Với giá trị hiện thực (realization), ký hiệu là chữ cái in thường: $m$ của $M$, ta ký hiệu:
+\begin{align*}
+    obs(m) &\text{ là các chỉ số của các giá trị } 0 \text{ của } m \text{ (các giá trị không bị khuyết)}, \\
+    mis(m) &\text{ là các chỉ số của các giá trị khác } 0 \text{ của } m \text{ (các giá trị bị khuyết)}.
+\end{align*}
+
+Trong ngữ cảnh dữ liệu bị khuyết:
+\begin{align*}
+    X_{obs(M)} &\text{ là các giá trị quan sát được trong } X, \\
+    X_{mis(M)} &\text{ là các giá trị không quan sát được trong } X.
+\end{align*}
+
+
+\begin{example}
+Giả sử với giá trị hiện thực: $x = (1.1, 2.2, -3.5, 4, 5.6) \in X$, ta có:
+\[
+    \begin{split}
+        \widetilde{x} &= (1.1, \texttt{NA}, -3.5, 4, \texttt{NA}) \\
+        m &= (0, 1, 0, 0, 1) \\
+        obs(m) &= (0, 2, 3) \\
+        x_{obs(m)} &= (1.1, -3.5, 4) \\
+        mis(m) &= (1, 4) \\
+        x_{mis(m)} &= (2.2, 5.6). \\
+    \end{split}
+\]
+\end{example}
+Khi không có sự nhầm lẫn nào, ta bỏ phần phụ thuộc $m$ để tiện ký hiệu, 
+ví dụ như $X_{obs}$ thay vì $X_{obs(m)}$.
+
+\subsection{Hồi quy tuyến tính với dữ liệu khuyết}
+Ta xét mô hình hồi quy tuyến tính tổng quát với các biến độc lập $X_1, X_2, \dots, X_d \in \R$, biến phụ thuộc $Y \in \R$, hệ số hồi quy $\beta_0, \beta_1, \dots, \beta_d$, và sai số ngẫu nhiên $\eps \sim \Normal(0, \sigma^2)$:
+\begin{equation*}
+    Y = \beta_0 + \beta_1 X_1  + \beta_2 X_2 + \dots + \beta_d X_d + \eps,
+\end{equation*}
+
+hay ta có thể viết dưới dạng 
+\begin{equation*}
+    Y = \beta_0 +  \sum_{j=1}^d \beta_j X_j + \eps = \beta_0 + \langle X, \beta \rangle + \eps,
+\end{equation*}
+
+với 
+$\beta = (\beta_1, \beta_2, \dots, \beta_d) \in \R^d$, $X = (X_1, X_2, \dots, X_d) \in \R^d$, và $\langle \cdot, \cdot \rangle$ là tích vô hướng.
+
+
+Giả sử quá trình sinh dữ liệu của $Y$ được xác định bởi mô hình hồi quy tuyến tính cho dữ liệu đầy đủ $X$ như sau:
+\begin{equation}\label{eq:lr_matrix_notation}
+    Y 
+    % = f^*(X) + \eps
+    = \beta_0^* + \langle X, \beta^* \rangle + \eps,
+\end{equation}
+với $\beta_0^*$, $\beta^* = (\beta_1^*, \beta_2^*, \dots, \beta_d^*)$ là các hệ số chính xác (true coefficients) để xây dựng mô hình.
+
+% Tuy nhiên, 
+Do dữ liệu $X$ có thể bị khuyết, nên việc ước lượng các hệ số hồi quy của mô hình có thể trở nên khó khăn. Đặc biệt khi với số chiều $d$ lớn, hay với các mẫu (pattern) dữ liệu khuyết phức tạp theo $m$.
+Thay vào đó, ta sẽ tìm một hàm $f$ mà nó ánh xạ dữ liệu 
+bị khuyết $\widetilde{X}$ 
+thành giá trị $Y$, tức $f$ là mô hình đưa ra dự đoán dựa trên dữ liệu 
+bị khuyết~$\widetilde{X}$.
+
+
+Vậy làm sao để biết $f$ sẽ cho ra kết quả dự đoán tốt nhất? Kết quả dự đoán tốt nhất khi sai số của dữ liệu được dự đoán $f(\widetilde{X})$ và dữ liệu quan sát $Y$ là nhỏ nhất. Ở đây, ta sử dụng hàm mất mát (loss function) bình phương sai số (squared error) có dạng:
+\[
+    L (Y, f(\widetilde{X})) = (Y - f(\widetilde{X}))^2.
+\]
+
+Tiếp theo, ta muốn $f$ hoạt động tốt trên toàn bộ tập dữ liệu $D_n$, bao gồm cả tập test, chứ không phải chỉ riêng 1 điểm dữ liệu. Do hàm mất mát chỉ dùng để đo sai số của 1 giá trị dự đoán, nên ta lấy kỳ vọng (trung bình) của hàm mất mát để giảm sai số dự đoán trung bình trên các điểm dữ liệu để đánh giá độ tốt của mô hình:
+\[
+    \E [L(Y, f(\widetilde{X}))] = \E[(Y - f(\widetilde{X}))^2],
+\]
+% hay còn được biết đến là Mean Squared Error (MSE).
+Kỳ vọng của hàm mất mát ngoài ra còn có một tên gọi khác là hàm rủi ro (risk).
+Vì ta muốn mô hình $f$ đưa ra dự đoán tốt nhất dựa trên dữ liệu khuyết $\tilde{X}$,
+tức mô hình có hàm rủi ro đạt giá trị thấp nhất (còn được gọi là Bayes risk),
+nên ta đi giải quyết bài toán tối ưu:
+\begin{equation}\label{eq:bayes_predictor_optimization_form}
+    f_{\widetilde{X}}^* \in \argmin_{f: \widetilde{\mathcal{X}} \to \R} \E [(Y - f(\widetilde{X}))^2].
+\end{equation}
+
+Phương trình này nhắm tới việc tìm $f_{\tilde{X}}^*$ sao cho khi áp dụng vào dữ liệu bị khuyết $\tilde{X}$, nó sẽ đưa ra dự đoán trung bình gần nhất có thể với giá trị thực của $Y$. 
+Lúc này, $f_{\widetilde{X}}^*$ còn được gọi là dự đoán Bayes (Bayes predictor).
+Hay có thể nói, dự đoán Bayes $f_{\widetilde{X}}^*$ là mô hình dự đoán $Y$ tốt nhất dựa trên dữ liệu khuyết $\widetilde{X}$.
+
+% Sở dĩ lại có ``Bayes'' trong Bayes risk và dự đoán Bayes là do chúng được dùng để tính toán cái chưa biết trên phân phối của dữ liệu đã được biết trước.
+
+Do $\widetilde{\mathcal{X}}$ tồn tại những phần tử $\NA$ đại diện cho dữ liệu khuyết, nên ta khó có thể tính toán~$f$ dựa trên $\widetilde{X}$. Từ đây, ta
+viết lại phương trình của dự đoán Bayes \eqref{eq:bayes_predictor_optimization_form}
+dưới dạng kỳ vọng có điều kiện của giá trị $Y$ với dữ liệu bị khuyết $\widetilde{X}$ để dễ tính toán:
+\begin{align}
+    f_{\widetilde{X}}^* (\widetilde{X})
+    &= \E [Y | \widetilde{X}] \notag \\
+    &= \E \left[Y | M,X_{obs(M)}\right] \notag \\
+    &= \sum_{m \in \{0,1\}^{d}} \E\left[Y|X_{obs(m)}, M=m\right] \mathbbm{1}_{M=m}. \label{eq:bayes_predictor_rewritten_submodel}
+\end{align}
+Tức là thay vì ta đi tính toán dựa trên vector đặc trưng bị khuyết $\widetilde{X}$, ta tính toán dựa trên vector mask $M$ và dữ liệu quan sát được theo vector mask $X_{obs(M)}$, 
+với $\mathbbm{1}_{M=m}$ là hàm chỉ thị (Indicator function):
+\[\mathbbm{1}_{M=m} = 
+    \begin{cases}
+        1 \quad \text{nếu } M = m, \\
+        0 \quad \text{nếu } M \neq m. \\
+    \end{cases}
+\]
+
+
+Việc viết dự đoán Bayes dưới dạng tổng của các kỳ vọng có điều kiện trên tất cả giá trị hiện thực $m$ như phương trình \eqref{eq:bayes_predictor_rewritten_submodel} cho ta thấy được độ phức tạp khi ta cần phải có $2^d$ mô hình để có thể học từng mẫu dữ liệu khuyết có thể xảy ra, và việc tính toán sẽ trở nên khó khăn khi số chiều $d$ lớn.
+Ngoài ra, 
+ta còn thấy được dự đoán Bayes là một tổ hợp các mô hình con để mô hình cho các mẫu dữ liệu khuyết, và nó dự đoán tốt hơn do ta mô hình dựa trên các mẫu dữ liệu khuyết khác nhau.
+
+Ta viết lại dự đoán Bayes $f^*$ dưới dạng một hàm của dữ liệu quan sát được $X_{\text{obs}(M)}$ và vector mask $M$:
+\begin{equation*}
+    f^* (X_{obs(M)}, M) = \E [Y | X_{obs(M)}, M].
+\end{equation*}
+
+Từ đây, ta có được dạng tổng quát của dự đoán Bayes:
+\begin{equation}\label{eq:bayes_predictor}
+    \begin{split}
+    f^* (X_{obs(M)}, M) = \beta_{0}^{*} + \langle\beta_{obs(M)}^{*}, X_{obs(M)}\rangle 
+    + \langle\beta_{mis(M)}^{*}, \E [X_{mis(M)} | M, X_{obs(M)}] \rangle,
+    \end{split}
+\end{equation}
+với $\beta_{obs(M)}^{*}$, $\beta_{mis(M)}^{*}$ tương ứng với hệ số hồi quy của các phần tử không bị khuyết và bị khuyết.
+
+\begin{proof} Ta có:
+    \begin{equation*}
+        \begin{split}
+        f^* (X_{obs(M)}, M) 
+        &= \E [Y | M, X_{\text{obs}(M)}] \\
+        &= \E [\beta_0^* + \langle \beta^*, X \rangle | M, X_{obs(M)}] \\
+        &= \E [\beta_0^* | M, X_{obs(M)}] + \E [\langle \beta^*, X \rangle | M, X_{obs(M)}] \\
+        &= \beta_0^* + \E [ \langle \beta_{obs(M)}^*, X_{obs(M)} \rangle + \langle \beta_{mis(M)}^*, X_{mis(M)} \rangle | M, X_{obs(M)}] \\
+        &= \beta_0^* + \E [\langle \beta_{obs(M)}^*, X_{obs(M)} \rangle | M , X_{obs(M)}] + \E [\langle \beta_{mis(M)}^*, X_{mis(M)} \rangle | M , X_{obs(M)}] \\
+        &= \beta_{0}^{*} + \langle\beta_{obs(M)}^{*}, X_{obs(M)}\rangle 
+        + \langle\beta_{mis(M)}^{*}, \E [X_{mis(M)} | M, X_{obs(M)}] \rangle. 
+        \end{split} 
+    \end{equation*} 
+    Vậy ta có điều phải chứng minh. \qed
+\end{proof}
+
+
+\subsection{Dự đoán Bayes (Bayes predictor)}
+
+Do có nhiều cơ chế dữ liệu khác nhau nên ta mong muốn phương pháp xử lý dữ liệu khuyết sẽ mạnh (robust) với từng cơ chế khác nhau, 
+tức ta muốn dự đoán Bayes có thể được biểu diễn dưới dạng đóng (closed-form) tổng quát cho cả 3 loại cơ chế. 
+Tuy nhiên, điều này gặp khó khăn
+vì dự đoán Bayes phụ thuộc vào phân phối của dữ liệu, cũng như đặc điểm riêng của từng cơ chế.
+
+Dẫu vậy, với dữ liệu tuân theo phân phối chuẩn đa biến, ta vẫn có thể biểu diễn dự đoán Bayes dưới dạng đóng cho từng loại cơ chế cụ thể. 
+
+\subsubsection{Mô hình cho cơ chế M(C)AR}
+
+Ta lần lượt đưa ra giả thiết về cơ chế MCAR và MAR dưới ngôn ngữ của xác suất:
+\begin{assume}\label{assume:mcar_assumption} (Cơ chế MCAR)
+Với mọi $m \in \{0, 1\}^d$, 
+    \begin{equation*}
+        P(M = m | X) = P(M = m).    
+    \end{equation*}
+\end{assume}
+
+Điều này cho thấy rằng, với cơ chế MCAR, xác suất để dữ liệu $X$ bị khuyết theo vector mask $M$ không phụ thuộc vào dữ liệu $X$. 
+% Hay có thể nói, phân phối của cơ chế MCAR hoàn toàn độc lập với dữ liệu.
+
+\begin{assume}\label{assume:mar_assumption} (Cơ chế MAR)
+Với mọi $m \in \{0, 1\}^d$,
+    \begin{equation*}
+        P(M = m | X) = P(M = m | X_{obs(m)}).
+    \end{equation*}
+\end{assume}
+
+Với cơ chế MAR, xác suất để dữ liệu $X$ bị khuyết theo vector mask $M$ chỉ phụ thuộc vào dữ liệu quan sát được $X_{obs(m)}$ mà không phụ thuộc vào dữ liệu không quan sát được $X_{mis(m)}$ trong điểm dữ liệu $X$.
+
+Và với 2 giả thiết trên, ta biểu diễn được dự đoán Bayes cho dữ liệu khuyết với cơ chế MCAR và MAR.
+
+\begin{prop}\label{prop:mcar_bayes_predictor} (Dự đoán Bayes với M(C)AR)
+Giả sử dữ liệu được sinh ra từ mô hình tuyến tính được định nghĩa ở phương trình \eqref{eq:lr_matrix_notation} và có phân phối chuẩn đa biến. Giả sử ta có giả thiết \ref{assume:mcar_assumption} hoặc \ref{assume:mar_assumption}, thì dự đoán Bayes $f^*$ có dạng:
+    \begin{equation}\label{eq:mcar_bayes_predictor}
+        f^* (X_{obs},M ) =
+        \beta_{0}^{*} + \langle\beta_{obs}^{*},X_{obs} \rangle+\langle\beta_{mis}^{*},\mu_{mis} + \cov_{mis,obs}(\cov_{obs})^{-1}(X_{obs}-\mu_{obs})\rangle,
+    \end{equation}
+    Với $obs$ (tương tự $mis$) thay vì $obs(M)$ (tương tự $mis(M)$) nếu không có thêm trường hợp~$M$ nào khác.
+\end{prop}
+
+\begin{proof}
+    Từ phương trình \eqref{eq:bayes_predictor}, ta có dạng tổng quát của dự đoán Bayes:
+    \begin{equation*}
+        f^* (X_{obs}, M) = \beta_{0}^{*} + \langle\beta_{obs(M)}^{*}, X_{obs(M)}\rangle 
+        + \langle\beta_{mis(M)}^{*}, \E [X_{mis(M)} | M, X_{obs(M)}] \rangle.
+    \end{equation*}
+    Để tính dự đoán Bayes, ta cần quan tâm tới việc tính $\E [X_{mis(M)} | M, X_{obs(M)}]$. Hay nói cách khác, ta cần tính $\E[X_j | M, X_{obs}]$, với mọi $j \in mis$. Để làm được điều này, ta sẽ xét $P(X_j | M, X_{obs})$, với mọi $j \in mis$.
+
+    Cho $mis'(M, j) = mis(M) \backslash \{j\}$. Nếu không có gì nhầm lẫn, ta rút gọn kí hiệu thành~$mis'$. Ta có:
+    \begin{align}
+            P(X_j|M, X_{obs}) &= \dfrac{P(M, X_j, X_{obs})}{P(M, X_{obs})} \notag \\
+            &= \dfrac{\int P(M, X_j, X_{obs}, X_{mis'}) \der X_{mis'}}{\int \int P(M, X_j, X_{obs}, X_{mis'}) \der X_{mis'} \der X_j} \notag \\
+            &= \dfrac{\int P(M | X_{obs}, X_j, X_{mis'}) P(X_{obs}, X_j, X_{mis'}) \der X_{mis'}}{\int \int P(M | X_{obs}, X_j, X_{mis'}) P(X_{obs}, X_j, X_{mis'}) \der X_{mis'} \der X_j}. \label{eq:PX_conditional_general}
+    \end{align}
+
+    Trong trường hợp MCAR, với mọi $m \in \{0, 1\}^d$, $P(M = m | X) = P(M = m)$, ta có:
+    \begin{align*}
+        P(X_j|M, X_{obs}) &= 
+        \dfrac{ P(M) \int P(X_{obs}, X_j, X_{mis'}) \der X_{mis'}}{P(M) \int \int P(X_{obs}, X_j, X_{mis'}) \der X_{mis'} \der X_j} \\
+        &= \dfrac{P(X_{obs}, X_j)}{P(X_{obs})} \\
+        &= P(X_j | X_{obs}). 
+    \end{align*}
+
+    Còn đối với trường hợp MAR, với mọi $m \in \{0, 1\}^d$, $P(M = m | X) = P(M = m | X_{obs(m)})$, ta có:
+    \begin{align*}
+        P(X_j|M, X_{obs}) &= 
+        \dfrac{ P(M|X_{obs}) \int P(X_{obs}, X_j, X_{mis'}) \der X_{mis'}}{P(M|X_{obs}) \int \int P(X_{obs}, X_j, X_{mis'}) \der X_{mis'} \der X_j} \\
+        &= \dfrac{P(X_{obs}, X_j)}{P(X_{obs})} \\
+        &= P(X_j | X_{obs}). 
+    \end{align*}
+    
+    Vì vậy, nếu cơ chế dữ liệu khuyết là MCAR hay MAR thì ta có:
+    \[
+        P(X_j|M, X_{obs}) = P(X_j | X_{obs}),
+    \]
+
+    tức:
+    \begin{equation*}
+        \E [X_{mis(M)} | M, X_{obs(M)}] = \E [X_{mis(M)} | X_{obs(M)}].
+    \end{equation*}
+
+    Thế phương trình trên vào phương trình dự đoán Bayes tổng quát \eqref{eq:bayes_predictor}, ta được:
+    \begin{equation}\label{eq:bayes_predictor_without_M}
+        f^* (X_{obs}, M) = 
+        \beta_{0}^{*} + \langle\beta_{obs(M)}^{*}, X_{obs(M)}\rangle 
+        + \langle\beta_{mis(M)}^{*}, \E [X_{mis(M)} | X_{obs(M)}]\rangle.
+    \end{equation}
+
+    Nếu không có gì nhầm lẫn cho trường hợp $M$ nào khác, ta kí hiệu $obs$ (tương tự $mis$) thay vì $obs(M)$ (tương tự $mis(M)$).
+
+    % Do đối với việc điền khuyết, ta dựa vào dữ liệu đã quan sát được để điền những dữ liệu bị khuyết, nên ta mô hình việc tính dữ liệu khuyết dựa trên dữ liệu đã quan sát được bằng phân phối chuẩn đa biến có điều kiện. 
+
+    Vì dữ liệu $X$ là vector có phân phối chuẩn đa biến $\Normal(\mu, \cov)$ theo giả thiết, nên ta 
+    xét phân phối chuẩn bị chia, 
+    tách riêng biệt phần dữ liệu quan sát được và không quan sát được, với 
+    \[
+        X = \begin{pmatrix}
+            X_{mis} \\
+            X_{obs}
+        \end{pmatrix}, \ 
+        \mu = \begin{pmatrix}
+            \mu_{mis} \\
+            \mu_{obs}
+        \end{pmatrix}, \ 
+        \cov = \begin{pmatrix}
+            \cov_{mis, mis} & \cov_{mis, obs}\\
+            \cov_{obs, mis} & \cov_{obs, obs}
+        \end{pmatrix},
+    \]
+    ta có:
+    \[
+        X_{mis} | X_{obs} \sim 
+        \Normal \left( \mu_{mis} + \cov_{mis,obs} (\cov_{obs})^{-1} (X_{obs} - \mu_{obs}), 
+        \cov_{mis,mis} - \cov_{mis,obs} (\cov_{obs})^{-1} \cov_{obs,mis} \right),
+    \]
+
+    tức
+    \begin{align*}
+            \mu_{mis|obs} &= \mu_{mis} + \cov_{mis,obs} (\cov_{obs})^{-1} (X_{obs} - \mu_{obs}), \\
+            \cov_{mis|obs} &= \cov_{mis,mis} - \cov_{mis,obs} (\cov_{obs})^{-1} \cov_{obs,mis}.
+    \end{align*} 
+
+    Từ đây, ta được:
+    \[
+        \E [X_{mis} | X_{obs}] = \mu_{mis} + \cov_{mis,obs} (\cov_{obs})^{-1} (X_{obs} - \mu_{obs}).
+    \]
+    
+    Kết hợp với \eqref{eq:bayes_predictor_without_M}, ta có:
+    \begin{equation*}
+        f^* (X_{obs}, M) = 
+        \beta_{0}^{*} + \langle\beta_{obs}^{*}, X_{obs}\rangle 
+        + \langle\beta_{mis}^{*}, \mu_{mis} + \cov_{mis,obs} (\cov_{obs})^{-1} (X_{obs} - \mu_{obs}) \rangle.
+    \end{equation*}
+    Vậy ta có điều phải chứng minh. \qed
+\end{proof}
+
+Qua mệnh đề trên, ta thấy rằng dự đoán Bayes trong trường hợp cơ chế MCAR và MAR là giống nhau, với giả thiết dữ liệu tuân theo phân phối chuẩn đa biến. Từ đây, ta có thể tính được dự đoán Bayes cho cả 2 cơ chế khác nhau, chỉ với phương trình \eqref{eq:mcar_bayes_predictor}. Tiếp theo, ta đi biểu diễn dự đoán Bayes cho cơ chế dữ liệu khuyết MNAR.
+
+
+\subsubsection{Mô hình cho cơ chế MNAR}
+Cơ chế MNAR phức tạp hơn so với các cơ chế còn lại do xác suất để dữ liệu bị khuyết phụ thuộc vào chính nó, nên dự đoán Bayes khó có thể được biểu diễn dưới dạng tổng quát cho cơ chế MNAR. 
+Tuy nhiên, ta vẫn có thể biểu diễn được dưới giả thiết cơ chế dữ liệu khuyết là Gaussian self-masking -- một dạng cơ chế MNAR, với xác suất để dữ liệu bị khuyết tuân theo phân phối chuẩn.
+
+
+\begin{assume}\label{assume:gaussian_self-masking}
+    (Gaussian self-masking)
+    Cơ chế dữ liệu bị khuyết được gọi là self-masked với 
+    $P(M|X) = \dps\prod_{k=1}^d P(M_k|X_k)$ và $\forall k \in [1,d]$,
+    \[
+        P(M_{k} = 1 | X_{k}) = K_{k} \exp\left( -\frac{1}{2} \frac{(X_{k} - \widetilde{\mu}_{k})^{2}}{\widetilde{\sigma}_{k}^{2}} \right), \quad \text{ với } 0 < K_{k} < 1.
+    \]
+\end{assume}
+
+Ở đây, $K_k$ là hằng số điều chỉnh xác suất $X_k$ bị khuyết: $K_k$ càng gần $1$ thì xác suất $X_k$ bị khuyết càng cao. Xác suất để $X_k$ bị khuyết tuân theo phân phối chuẩn $\Normal(\widetilde{\mu}_{k}, \widetilde{\sigma}_{k}^2 )$, với trung bình $\widetilde{\mu}_{k}$ và phương sai $\widetilde{\sigma}_{k}^2$. Nghĩa là xác suất này cao khi $X_k$ gần với $\widetilde{\mu}_{k}$ và giảm dần khi $X_k$ càng xa $\widetilde{\mu}_{k}$. Độ lớn của $\widetilde{\sigma}_{k}^2$ điều khiển mức độ giảm của xác suất khuyết theo khoảng cách từ $X_k$ đến $\widetilde{\mu}_{k}$.
+
+Tóm lại, Gaussian self-masking cho ta các giả thiết:
+\begin{itemize}
+    \item Xác suất để $X_k$ bị khuyết không phụ thuộc vào các giá trị khác trong cùng 1 điểm dữ liệu,
+    \item Xác suất để $X_k$ bị khuyết ($M_k = 1$) phụ thuộc vào chính $X_k$, và tuân theo phân phối chuẩn.
+\end{itemize}
+
+Sau khi đã có giả thiết cơ chế Gaussian self-masking, ta đi biểu diễn dự đoán Bayes cho cơ chế này.
+
+
+\begin{prop}\label{prop:gaussian_bayes_predictor} (Dự đoán Bayes với Gaussian self-masking)
+Giả sử dữ liệu được sinh ra từ mô hình tuyến tính được định nghĩa ở phương trình \eqref{eq:lr_matrix_notation} tuân theo phân phối chuẩn đa biến và thoả giả thiết  \ref{assume:gaussian_self-masking}. 
+Cho $\cov_{mis|obs} = \cov_{mis,mis} - \cov_{mis,obs} (\cov_{obs})^{-1} \cov_{obs,mis}$,
+và $D$ là ma trận đường chéo sao cho $\diag(D) = (\sigma_1^2, \dots, \sigma_d^2)$. Lúc này, dự đoán Bayes được viết dưới dạng:
+\begin{multline}\label{eq:gaussian_bayes_predictor}
+    f^{*}(X_{obs}, M) = 
+    \beta_{0}^{*} + \langle\beta_{obs}^{*}, X_{obs}\rangle 
+    + \langle\beta_{mis}^{*},(Id + D_{mis} \cov_{mis|obs}^{-1})^{-1} \\
+    \times (\tilde{\mu}_{mis} + D_{mis}\cov_{mis|obs}^{-1}(\mu_{mis} + 
+    \cov_{mis,obs}\left(\cov_{obs}\right)^{-1} (X_{obs}-\mu_{obs}))) \rangle.
+\end{multline}
+\end{prop}
+
+
+\begin{proof}
+    Với giả thiết cơ chế dữ liệu bị khuyết Gaussian self-masking, ta có xác suất dữ liệu bị khuyết trên chính tập dữ liệu là:
+    \begin{equation*}
+        P(M=m | X) = P(M_{mis(m)}=1 | X_{mis(m)}) P(M_{obs(m)}=0 | X_{obs(m)}).
+    \end{equation*}
+
+    Từ đây, phương trình \eqref{eq:PX_conditional_general} có thể được viết lại thành:    
+    \begin{align}
+        P(X_j | M, X_{obs}) &= \dfrac{ P(M_{obs}=0 | X_{obs}) \int P(M_{mis}=1 | X_{mis}) P(X_{obs}, X_j, X_{mis'}) \der X_{mis'}}
+        {P(M_{obs}=0 | X_{obs}) \int \int P(M_{mis}=1 | X_{mis}) P(X_{obs}, X_j, X_{mis'}) \der X_{mis'} \der X_j} \notag \\
+        &= \dfrac{\int P(M_{mis}=1 | X_{mis}) P(X_{mis} | X_{obs}) P(X_{obs}) \der X_{mis'}}
+        {\int \int P(M_{mis}=1 | X_{mis}) P(X_{mis} | X_{obs}) P(X_{obs}) \der X_{mis'} \der X_j} \notag \\
+        &= \dfrac{\int P(M_{mis}=1 | X_{mis}) P(X_{mis} | X_{obs}) \der X_{mis'}}
+        {\int \int P(M_{mis}=1 | X_{mis}) P(X_{mis} | X_{obs}) \der X_{mis'} \der X_j}.\label{eq:PX_conditional_gaussian}
+    \end{align}
+
+    Giờ đây, ta muốn tính $P(M_{mis}=1 | X_{mis}) P(X_{mis} | X_{obs})$. 
+    Đặt $D$ là ma trận đường chéo sao cho $\diag(D) = \widetilde{\sigma}^2$, với $\widetilde{\sigma}^2 = (\sigma_1^2, \dots, \sigma_d^2)$ được định nghĩa ở trong \ref{assume:gaussian_self-masking}. 
+    Theo giả thiết, ta có $\forall k \in [1,d]$:
+    \begin{align*}
+        P(M|X) &= \prod_{k=1}^d P(M_k|X_k) \\
+        \Rightarrow P(M_{mis}=1 | X_{mis}) &= \prod_{k\in mis}^d P(M_k = 1|X_k).
+    \end{align*}
+    Kết hợp với định nghĩa trong giả thiết \ref{assume:gaussian_self-masking}, ta có:
+    \begin{align*}
+        P(M_{mis}=1 | X_{mis}) &= \prod_{k\in mis}^d \left( K_{k} \exp\left( -\frac{1}{2} \frac{(X_{k} - \widetilde{\mu}_{k})^{2}}{\widetilde{\sigma}_{k}^{2}} \right) \right) \\
+        &= \prod_{k\in mis}^d K_{k} \prod_{k\in mis}^d \exp\left( -\frac{1}{2} \frac{(X_{k} - \widetilde{\mu}_{k})^{2}}{\widetilde{\sigma}_{k}^{2}} \right) \\
+        &= \prod_{k\in mis}^d K_{k} \  \exp\left( -\frac{1}{2} \sum_{k\in mis}^d \frac{(X_{k} - \widetilde{\mu}_{k})^{2}}{\widetilde{\sigma}_{k}^{2}} \right).
+    \end{align*}
+    Qua các kí hiệu bằng ma trận, ta có xác suất để dữ liệu bị khuyết ($M_{mis} = 1$) khi biết các giá trị không quan sát được $X_{mis}$ dưới dạng:
+    \begin{equation}\label{eq:masking_probability}
+        P(M_{mis}=1 | X_{mis}) = \prod_{k \in mis}^{d} K_{k} 
+        \ \exp\left(-\frac{1}{2}(X_{mis}-\widetilde{\mu}_{mis})^{\top}(D_{mis,mis})^{-1}(X_{mis}-\widetilde{\mu}_{mis})\right).
+    \end{equation}
+
+    Do $X_{mis}$, $X_{obs}$ đều là các phân phối chuẩn đa biến, nên ta sử dụng phân phối chuẩn có điều kiện, với $X_{mis} | X_{obs} \sim \Normal(X_{mis} | \mu_{mis|obs}, \cov_{mis|obs})$, ta có:
+    \begin{align}
+        \mu_{mis|obs} &= \mu_{mis} + \cov_{mis, obs}\cov_{obs, obs}^{-1} (X_{obs} - \mu_{obs}) \label{eq:mu_mis_obs}, \\ 
+        \cov_{mis|obs} &= \cov_{mis, mis} - \cov_{mis, obs} \cov_{obs, obs}^{-1} \cov_{obs, mis}, \notag
+    \end{align}
+    và
+    \[
+        P(X_{mis} | X_{obs}) = 
+        \frac{1}{\sqrt{(2\pi)^{|mis|} |\cov_{mis|obs}|}}  \exp \left(- \frac{1}{2} (X_{mis} - \mu_{mis|obs})^{\top} \cov_{mis|obs}^{-1}  (X_{mis} - \mu_{mis|obs})\right).
+    \]
+    
+    Từ phương trình \eqref{eq:masking_probability}, $P(M_{mis}=1 | X_{mis})$ và $P(X_{mis} | X_{obs})$ đều là hàm Gauss của $X_{mis}$. Áp dụng bổ đề \ref{lem:prod_gauss}, tích của chúng cũng là 1 hàm Gauss dưới dạng:
+    \begin{equation*}
+        P(M_{m i s}=1|X_{m i s})P(X_{m i s}|X_{o b s})=K\exp\left(-\frac{1}{2}(X_{m i s}-a_{M})^{\top}\left(A_{M}\right)^{-1}\left(X_{m i s}-a_{M}\right)\right),
+    \end{equation*}
+
+    với $a_M$ và $A_M$ phụ thuộc vào mẫu dữ liệu khuyết: 
+    \begin{equation}\label{eq:A_M_inverse}
+        (A_M)^{-1} = D_{mis,mis}^{-1} + \cov_{mis|obs}^{-1},
+    \end{equation}
+    \begin{equation}\label{eq:A_M_inverse_a_M}
+        (A_M)^{-1}a_M = D_{mis,mis}^{-1}\tilde{\mu}_{mis} + \cov_{mis|obs}^{-1}\mu_{mis|obs},
+    \end{equation}
+    và:
+    \begin{equation*}
+        K = \frac{\prod_{k \in mis}^{d} K_{k}}{\sqrt{(2\pi)^{|mis|}|\cov_{mis|obs}}|}
+        \exp\left(-\frac{1}{2} ({\tilde{\mu}}_{mis} - \mu_{mis|obs})^\top 
+        (\cov_{mis|obs} + D_{mis|obs})^{-1}({\tilde{\mu}}_{mis} - \mu_{mis|obs})\right).
+    \end{equation*}
+    
+    Bởi vì $K$ không phụ thuộc vào $X_{mis}$, nên đơn giản phương trình \eqref{eq:PX_conditional_gaussian}, ta được:
+    \begin{align*}
+        P(X_j|M, X_{obs}) &= \dfrac{\int \Normal(X_{mis} | a_M, A_M) \der X_{mis'}}{\int \int \Normal(X_{mis} | a_M, A_M) \der X_{mis'} \der X_j} \\
+        &= \int \Normal(X_{mis} | a_M, A_M) \der X_{mis'}.
+    \end{align*}
+    
+    Phần mẫu số $\int \int \Normal(X_{mis} | a_M, A_M) \der X_{mis'} \der X_j = 1$ do tích phân của hàm mật độ xác suất trên miền xác định luôn bằng $1$. Nó còn được coi là hằng số chuẩn hoá (Normalization constant) cho phần tử số. Qua đây, ta thấy được mật độ $P(X_j|M, X_{obs})$ chính là phân phối biên  (marginal distribution) của $X_j$, được tính bằng cách lấy tích phân các biến còn lại trong $X_{mis'}$.
+
+    Do phân phối biên của một phân phối chuẩn đa biến là một phân phối chuẩn (trong trường hợp này là phân phối chuẩn cho $X_j$), nên
+    \[
+      P(X_j|M, X_{obs}) = \Normal \left(X_j | (a_M)_j , (A_M)_{j,j}\right), 
+    \]
+    với $(a_M)_j$ là phần tử thứ $j$ của vector $a_M$, $(A_M)_{j,j}$ là phần tử thứ $j$ nằm trên đường chéo của ma trận hiệp phương sai $A_M$.
+    Và do đó:
+    \begin{equation}\label{eq:E_equal_a_M}
+        \E [X_{mis} | M, X_{obs}] = (a_M)_{mis}.
+    \end{equation}
+
+    Từ \eqref{eq:A_M_inverse} ta có:
+    \begin{equation*}
+        A_M = ( D_{mis,mis}^{-1} + \cov_{mis|obs}^{-1} )^{-1},
+    \end{equation*}
+    nhân cả 2 vế cho phương trình \eqref{eq:A_M_inverse_a_M}, ta được:
+    \begin{align*}
+        a_M &= ( D_{mis,mis}^{-1} + \cov_{mis|obs}^{-1} )^{-1} 
+        ( D_{mis,mis}^{-1}\tilde{\mu}_{mis} + \cov_{mis|obs}^{-1}\mu_{mis|obs} ) \\
+        &= ( D_{mis,mis}^{-1} + \cov_{mis|obs}^{-1} )^{-1} 
+        D_{mis,mis}^{-1} ( \tilde{\mu}_{mis} + D_{mis,mis}\cov_{mis|obs}^{-1}\mu_{mis|obs} ) \\
+        &= ( D_{mis,mis} (D_{mis,mis}^{-1} + \cov_{mis|obs}^{-1}) )^{-1} 
+         ( \tilde{\mu}_{mis} + D_{mis,mis}\cov_{mis|obs}^{-1}\mu_{mis|obs} ) \\
+        &= (Id + D_{mis,mis}\cov_{mis|obs}^{-1} )^{-1} 
+         ( \tilde{\mu}_{mis} + D_{mis,mis}\cov_{mis|obs}^{-1}\mu_{mis|obs} ). 
+    \end{align*}
+
+    Từ kết quả trên, kết hợp với \eqref{eq:E_equal_a_M} và \eqref{eq:mu_mis_obs}, ta được:
+    \begin{multline*}
+        \E [X_{mis} | M, X_{obs}] = (Id + D_{mis,mis}\cov_{mis|obs}^{-1} )^{-1} \\
+         \times ( \tilde{\mu}_{mis} + D_{mis,mis}\cov_{mis|obs}^{-1} 
+         (\mu_{mis} + \cov_{mis, obs}\cov_{obs, obs}^{-1} (X_{obs} - \mu_{obs}) )  ).
+    \end{multline*}
+
+    Kết hợp với phương trình của dự đoán Bayes dạng tổng quát \eqref{eq:bayes_predictor}, ta có:
+    \begin{multline*}
+        f^{*}(X_{obs}, M) = 
+        \beta_{0}^{*} + \langle\beta_{obs}^{*}, X_{obs}\rangle 
+        + \langle\beta_{mis}^{*},(Id + D_{mis} \cov_{mis|obs}^{-1})^{-1} \\
+        \times (\tilde{\mu}_{mis} + D_{mis}\cov_{mis|obs}^{-1}(\mu_{mis} + 
+        \cov_{mis,obs}\left(\cov_{obs}\right)^{-1} (X_{obs}-\mu_{obs}))) \rangle.
+    \end{multline*}
+    Vậy ta có điều phải chứng minh. \qed
+\end{proof}
+
+Qua mệnh đề này, dự đoán Bayes có thể được biểu diễn cho cơ chế MNAR, cụ thể là cơ chế Gaussian self-masking.
+
+Từ 2 mệnh đề \ref{prop:mcar_bayes_predictor} và \ref{prop:gaussian_bayes_predictor}, 
+mỗi mô hình trong $2^d$ mô hình ở phương trình \eqref{eq:bayes_predictor_rewritten_submodel} có thể được biểu diễn dưới dạng 1 hàm tuyến tính của dữ liệu quan sát được $X_{obs}$. Hay nói cách khác, dự đoán Bayes là tuyến tính theo từng mẫu dữ liệu khuyết với các giả thiết được sử dụng. Ngoài ra, ta còn thấy được phương trình dự đoán Bayes không phụ thuộc vào giá trị của dữ liệu bị khuyết $X_{mis}$ cho cả 3 cơ chế.
